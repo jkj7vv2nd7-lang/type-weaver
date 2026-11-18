@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="studio">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TypeWeaver — 音と実用が融合する適応型タッチタイピング・スタジオ</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #070A0F;
+      --bg-surface: rgba(16, 22, 32, 0.78);
+      --bg-elevated: rgba(25, 34, 48, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --accent-primary: #14B8A6;
+      --accent-secondary: #F97316;
+      --glow-1: rgba(20, 184, 166, 0.16);
+      --glow-2: rgba(249, 115, 22, 0.12);
+      --key-bg: #161E2B;
+      --key-border: #2A3649;
+      --key-shadow: #090D14;
+    }
+    html[data-theme="paper"] {
+      --bg-base: #F4F5F7;
+      --bg-surface: rgba(255, 255, 255, 0.9);
+      --bg-elevated: #F1F5F9;
+      --border-subtle: rgba(15, 23, 42, 0.1);
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --accent-primary: #0D9488;
+      --accent-secondary: #EA580C;
+      --glow-1: rgba(13, 148, 136, 0.09);
+      --glow-2: rgba(234, 88, 12, 0.06);
+      --key-bg: #FFFFFF;
+      --key-border: #CBD5E1;
+      --key-shadow: #94A3B8;
+    }
+    html[data-theme="amber"] {
+      --bg-base: #0E0B14;
+      --bg-surface: rgba(24, 18, 36, 0.82);
+      --bg-elevated: rgba(38, 28, 56, 0.88);
+      --border-subtle: rgba(245, 158, 11, 0.15);
+      --text-primary: #FEF3C7;
+      --text-secondary: #C4B5FD;
+      --accent-primary: #F59E0B;
+      --accent-secondary: #EC4899;
+      --glow-1: rgba(245, 158, 11, 0.15);
+      --glow-2: rgba(236, 72, 153, 0.14);
+      --key-bg: #1C152B;
+      --key-border: #3B2D54;
+      --key-shadow: #09060E;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(ellipse 70% 50% at 15% 0%, var(--glow-1), transparent 60%),
+        radial-gradient(ellipse 60% 45% at 85% 5%, var(--glow-2), transparent 60%),
+        radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .glass-panel {
+      background: var(--bg-surface);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .sub-surface {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    .animate-shake {
+      animation: shake 0.16s ease-in-out;
+    }
+
+    /* 3D Mechanical Keycap Aesthetic */
+    .key-cap {
+      background: var(--key-bg);
+      border: 1px solid var(--key-border);
+      border-bottom-width: 4px;
+      border-bottom-color: var(--key-shadow);
+      color: var(--text-primary);
+      transition: transform 0.06s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.12s ease;
+      user-select: none;
+      position: relative;
+    }
+    .key-cap::after {
+      content: "";
+      position: absolute;
+      bottom: 2px;
+      left: 22%;
+      right: 22%;
+      height: 2px;
+      border-radius: 2px;
+      opacity: 0.55;
+    }
+    .key-cap.finger-left::after { background: var(--accent-primary); }
+    .key-cap.finger-right::after { background: var(--accent-secondary); }
+    .key-cap.homing::before {
+      content: "";
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      opacity: 0.45;
+    }
+    .key-cap.active-target {
+      border-color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+      background: linear-gradient(180deg, rgba(20, 184, 166, 0.24), rgba(20, 184, 166, 0.10));
+      box-shadow: 0 0 18px rgba(20, 184, 166, 0.38);
+      transform: translateY(-1px);
+    }
+    .key-cap.just-pressed {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+      background: var(--accent-primary);
+      color: #070A0F;
+      border-color: var(--accent-primary);
+    }
+    .key-cap.just-missed {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+      background: rgba(249, 115, 22, 0.35);
+      border-color: #F97316;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-teal-500/30">
+
+  <!-- Top Navigation & Studio Control Bar -->
+  <header class="border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] backdrop-blur-xl sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Brand -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 via-emerald-400 to-cyan-500 flex items-center justify-center text-slate-950 font-extrabold font-mono-code text-sm shadow-lg shadow-teal-500/20 shrink-0">TW</div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="font-bold tracking-tight text-base sm:text-lg truncate">TypeWeaver</span>
+            <span class="hidden lg:inline-block text-[10px] font-mono-code uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-400 border border-teal-500/25">Rhythm Studio</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Pills -->
+      <nav class="flex items-center gap-1 sub-surface p-1 rounded-xl">
+        <button id="nav-studio" type="button" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition bg-teal-500 text-slate-950 shadow-sm">スタジオ</button>
+        <button id="nav-byot" type="button" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition opacity-75 hover:opacity-100">BYOT作成</button>
+        <button id="nav-radar" type="button" class="nav-tab px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition opacity-75 hover:opacity-100">迷いレーダー</button>
+      </nav>
+
+      <!-- Theme, Streak & Audio Controls -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="btn-theme" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium sub-surface hover:border-teal-500/50 transition" title="外観テーマを切り替え">
+          <span class="w-2 h-2 rounded-full bg-gradient-to-r from-teal-400 to-orange-400"></span>
+          <span id="theme-label">Studio</span>
+        </button>
+
+        <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg sub-surface text-xs" title="連続練習日数（週1回自動保護付き）">
+          <span class="text-orange-400 font-bold font-mono-code" id="streak-count">1</span>
+          <span class="opacity-70">日連続</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 font-medium">保護1</span>
+        </div>
+
+        <button id="btn-bgm" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium sub-surface opacity-80 hover:opacity-100 hover:border-teal-500/50 transition" title="Lo-fi 伴奏ビートのオン/オフ">
+          BGM: OFF
+        </button>
+
+        <button id="btn-mute" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold sub-surface text-teal-400 hover:border-teal-500/50 transition" title="サウンドのオン/オフ">
+          音: ON
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-teal-500 text-slate-950 font-semibold text-sm shadow-xl shadow-teal-500/20 transition-opacity"></div>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ==================== VIEW 1: STUDIO ==================== -->
+    <section id="view-studio" class="space-y-5">
+      <!-- Stage Selector & Sound Pack Bar -->
+      <div class="glass-panel rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs opacity-60 mr-1 font-medium">ステージ:</span>
+          <button type="button" data-stage="news" class="stage-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm">テック記事(日本語)</button>
+          <button type="button" data-stage="essay" class="stage-btn px-3 py-1.5 rounded-xl text-xs font-medium sub-surface opacity-80 hover:opacity-100">名言・エッセイ</button>
+          <button type="button" data-stage="code" class="stage-btn px-3 py-1.5 rounded-xl text-xs font-medium sub-surface opacity-80 hover:opacity-100">TypeScriptコード</button>
+          <button type="button" data-stage="english" class="stage-btn px-3 py-1.5 rounded-xl text-xs font-medium sub-surface opacity-80 hover:opacity-100">ビジネス英語</button>
+          <button id="btn-open-byot-shortcut" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-orange-500/15 text-orange-400 border border-orange-500/30 hover:bg-orange-500/25 transition">+ 自分の文章</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="sound-pack" class="text-xs opacity-60">音色:</label>
+          <select id="sound-pack" class="sub-surface text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-teal-500 font-medium">
+            <option value="lofi">Lo-fi Synth</option>
+            <option value="piano">Mechanical + Piano</option>
+            <option value="marimba">Zen Marimba</option>
+            <option value="chiptune">Chiptune 8-bit</option>
+          </select>
+          <button id="btn-reset-stage" type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium sub-surface opacity-80 hover:opacity-100 transition">やり直す</button>
+        </div>
+      </div>
+
+      <!-- Live Metrics Strip -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-panel rounded-2xl p-4 relative overflow-hidden">
+          <div class="text-[11px] font-medium opacity-60 uppercase tracking-wider">Speed / WPM</div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono-code mt-1" id="metric-wpm">0</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 relative overflow-hidden">
+          <div class="text-[11px] font-medium opacity-60 uppercase tracking-wider">Accuracy</div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono-code mt-1" id="metric-acc">100%</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 relative overflow-hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-medium opacity-60 uppercase tracking-wider">Flow Score</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/15 text-teal-400 font-medium">リズム安定</span>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold font-mono-code text-teal-400 mt-1" id="metric-flow">--</div>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 relative overflow-hidden">
+          <div class="text-[11px] font-medium opacity-60 uppercase tracking-wider">Combo / Synth Layer</div>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span class="text-2xl sm:text-3xl font-extrabold font-mono-code text-orange-400" id="metric-combo">0</span>
+            <span class="text-xs opacity-70 font-mono-code truncate" id="combo-layer-label">Layer 1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Typing Studio Arena -->
+      <div id="typing-arena" class="glass-panel rounded-3xl p-5 sm:p-8 relative overflow-hidden focus:outline-none" tabindex="0">
+        <!-- Spectrum Audio Visualizer -->
+        <div class="mb-5">
+          <canvas id="viz-canvas" class="w-full h-16 rounded-2xl bg-black/25 border border-[var(--border-subtle)]"></canvas>
+        </div>
+
+        <!-- Stage Progress -->
+        <div class="flex items-center justify-between text-xs mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+            <span id="stage-title-display" class="font-semibold tracking-wide">テック記事（日本語ローマ字）</span>
+          </div>
+          <span id="stage-progress-text" class="font-mono-code opacity-75">1 / 3</span>
+        </div>
+        <div class="w-full h-1.5 bg-black/20 rounded-full overflow-hidden mb-7">
+          <div id="stage-progress-bar" class="h-full bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400 transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- Sentence & Romaji Guide Display -->
+        <div id="prompt-display" class="space-y-3.5">
+          <div id="display-kanji" class="text-xl sm:text-2xl font-bold tracking-wide leading-relaxed"></div>
+          <div id="display-kana" class="text-sm opacity-65 tracking-wider min-h-[1.25rem]"></div>
+          <div id="display-romaji" class="font-mono-code text-lg sm:text-xl tracking-wider leading-relaxed break-all sub-surface rounded-2xl p-4 sm:p-5 shadow-inner"></div>
+        </div>
+
+        <!-- Focus Hint & Mobile Input -->
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
+          <span id="focus-hint">PCキーボードでそのまま入力を開始できます（半角英数モード推奨）</span>
+          <div class="flex items-center gap-2">
+            <input id="mobile-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="スマホ/タップ入力用" class="sm:hidden sub-surface rounded-lg px-3 py-1.5 text-sm w-44 focus:outline-none focus:border-teal-500" />
+            <span class="font-mono-code text-teal-400" id="romaji-mode-badge">揺れ判定: ON (si/shi・n/nn自動吸収)</span>
+          </div>
+        </div>
+
+        <!-- Stage Completed Overlay -->
+        <div id="result-panel" class="hidden mt-6 pt-6 border-t border-[var(--border-subtle)] space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div class="text-xs font-mono-code text-teal-400 uppercase tracking-widest">Session Complete</div>
+              <h3 class="text-xl font-bold mt-1">ステージ完走！打鍵リズムを解析しました</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-adaptive-next" type="button" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 transition">苦手運指の特化ステージを生成して続ける</button>
+              <button id="btn-replay-stage" type="button" class="px-4 py-2.5 rounded-xl sub-surface font-medium text-sm hover:border-teal-500/50 transition">もう一度</button>
+            </div>
+          </div>
+          <div id="result-bottlenecks" class="text-sm sub-surface rounded-2xl p-4"></div>
+        </div>
+      </div>
+
+      <!-- 3D Mechanical Tactile Keyboard Guide -->
+      <div class="glass-panel rounded-3xl p-4 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="text-xs font-semibold tracking-wide opacity-80">タクタイル運指ガイド（物理キーボード連動）</div>
+          <div class="flex flex-wrap items-center gap-3 text-[11px] opacity-75">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full bg-teal-400 inline-block"></span>左手担当</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 rounded-full bg-orange-400 inline-block"></span>右手担当</span>
+            <span class="text-teal-400 font-semibold font-mono-code" id="next-finger-hint">次の指: --</span>
+          </div>
+        </div>
+        <div id="virtual-keyboard" class="space-y-2 max-w-3xl mx-auto"></div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: BYOT GENERATOR ==================== -->
+    <section id="view-byot" class="hidden space-y-6">
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-5">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold">BYOT（Bring Your Own Text）ステージ生成</h2>
+          <p class="text-sm opacity-75 mt-1">
+            自分が読みたい記事、覚えたい英単語、書きたいプログラムコードを貼り付けて、即座に音楽リズム・ステージへ変換します。
+          </p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="byot-title" class="block text-xs font-medium opacity-80 mb-1.5">ステージタイトル</label>
+            <input id="byot-title" type="text" value="マイ・カスタムステージ" class="w-full sub-surface rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-teal-500" />
+          </div>
+          <div>
+            <label for="byot-mode" class="block text-xs font-medium opacity-80 mb-1.5">入力モード</label>
+            <select id="byot-mode" class="w-full sub-surface rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-teal-500">
+              <option value="japanese">日本語（表示文＋よみがなローマ字）</option>
+              <option value="direct">英語 / プログラムコード（直接入力）</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="byot-display-text" class="block text-xs font-medium opacity-80 mb-1.5">練習したいテキスト（1行ごとに1問になります）</label>
+          <textarea id="byot-display-text" rows="4" class="w-full sub-surface rounded-xl px-3.5 py-2.5 text-sm font-mono-code focus:outline-none focus:border-teal-500" placeholder="ここに英文・コード・日本語の文章を貼り付けてください">きょうはあたらしいきーぼーどでりずむよくたいぴんぐする。
+しゅっしんちのめいぶつをたべながらこーどをかく。</textarea>
+        </div>
+
+        <div id="byot-kana-wrap">
+          <label for="byot-kana-text" class="block text-xs font-medium opacity-80 mb-1.5">よみがな（ひらがな・記号。日本語モードで漢字を含めた場合に入力してください）</label>
+          <textarea id="byot-kana-text" rows="3" class="w-full sub-surface rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-teal-500" placeholder="上の行に対応するひらがなを入力（ひらがなのみの場合は空欄でもそのまま使えます）"></textarea>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="btn-create-byot" type="button" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 transition">このテキストでスタジオを開始</button>
+          <button id="btn-sample-byot-code" type="button" class="px-4 py-2.5 rounded-xl sub-surface text-xs font-medium hover:border-teal-500/50 transition">サンプル：React Hookをセット</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: HESITATION RADAR ==================== -->
+    <section id="view-radar" class="hidden space-y-6">
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold">指の迷いレーダー（Bigram Latency 解析）</h2>
+            <p class="text-sm opacity-75 mt-1">
+              キーを押してから次のキーを押すまでの遷移時間（ミリ秒）を記録し、プラトーの原因となる「無意識の迷い」を特定します。
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-start-weakness-drill" type="button" class="px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/20 transition">苦手運指の特化ドリルを開始</button>
+            <button id="btn-clear-stats" type="button" class="px-3 py-2 rounded-xl sub-surface text-xs opacity-75 hover:opacity-100 transition">履歴リセット</button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="sub-surface rounded-2xl p-5">
+            <h3 class="text-sm font-bold mb-3">反応が遅いキー遷移 Top 6（迷いランキング）</h3>
+            <div id="radar-bigram-list" class="space-y-3 text-sm"></div>
+          </div>
+
+          <div class="sub-surface rounded-2xl p-5">
+            <h3 class="text-sm font-bold mb-3">直近のセッション推移（WPM &amp; Flow Score）</h3>
+            <div id="radar-history-list" class="space-y-2.5 text-sm"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. JAPANESE ROMAJI FUZZY MATCHER (Trie Pruning + Context 'n'/'っ')
+    // =========================================================================
+    const ROMAJI_TABLE = {
+      "あ":["a"],"い":["i","yi"],"う":["u","wu","whu"],"え":["e"],"お":["o"],
+      "か":["ka","ca"],"き":["ki"],"く":["ku","cu","qu"],"け":["ke"],"こ":["ko","co"],
+      "さ":["sa"],"し":["si","shi","ci"],"す":["su"],"せ":["se","ce"],"そ":["so"],
+      "た":["ta"],"ち":["ti","chi"],"つ":["tu","tsu"],"て":["te"],"と":["to"],
+      "な":["na"],"に":["ni"],"ぬ":["nu"],"ね":["ne"],"の":["no"],
+      "は":["ha"],"ひ":["hi"],"ふ":["hu","fu"],"へ":["he"],"ほ":["ho"],
+      "ま":["ma"],"み":["mi"],"む":["mu"],"め":["me"],"も":["mo"],
+      "や":["ya"],"ゆ":["yu"],"よ":["yo"],
+      "ら":["ra"],"り":["ri"],"る":["ru"],"れ":["re"],"ろ":["ro"],
+      "わ":["wa"],"を":["wo"],"ん":["n","nn","xn"],
+      "が":["ga"],"ぎ":["gi"],"ぐ":["gu"],"げ":["ge"],"ご":["go"],
+      "ざ":["za"],"じ":["zi","ji"],"ず":["zu"],"ぜ":["ze"],"ぞ":["zo"],
+      "だ":["da"],"ぢ":["di"],"づ":["du"],"で":["de"],"ど":["do"],
+      "ば":["ba"],"び":["bi"],"ぶ":["bu"],"べ":["be"],"ぼ":["bo"],
+      "ぱ":["pa"],"ぴ":["pi"],"ぷ":["pu"],"ぺ":["pe"],"ぽ":["po"],
+      "ぁ":["la","xa"],"ぃ":["li","xi","lyi","xyi"],"ぅ":["lu","xu"],"ぇ":["le","xe","lye","xye"],"ぉ":["lo","xo"],
+      "ゃ":["lya","xya"],"ゅ":["lyu","xyu"],"ょ":["lyo","xyo"],
+      "っ":["ltu","xtu","ltsu","xtsu"],
+      "きゃ":["kya","kixya","kilya"],"きゅ":["kyu","kixyu","kilyu"],"きょ":["kyo","kixyo","kilyo"],
+      "しゃ":["sya","sha","sixya","shixya","silya"],"しゅ":["syu","shu","sixyu","shixyu","silyu"],"しょ":["syo","sho","sixyo","shixyo","silyo"],
+      "ちゃ":["tya","cha","cya","tixya","chixya"],"ちゅ":["tyu","chu","cyu","tixyu","chixyu"],"ちょ":["tyo","cho","cyo","tixyo","chixyo"],
+      "にゃ":["nya","nixya","nilya"],"にゅ":["nyu","nixyu","nilyu"],"にょ":["nyo","nixyo","nilyo"],
+      "ひゃ":["hya","hixya","hilya"],"ひゅ":["hyu","hixyu","hilyu"],"ひょ":["hyo","hixyo","hilyo"],
+      "みゃ":["mya","mixya","milya"],"みゅ":["myu","mixyu","milyu"],"みょ":["myo","mixyo","milyo"],
+      "りゃ":["rya","rixya","rilya"],"りゅ":["ryu","rixyu","rilyu"],"りょ":["ryo","rixyo","rilyo"],
+      "ぎゃ":["gya","gixya","gilya"],"ぎゅ":["gyu","gixyu","gilyu"],"ぎょ":["gyo","gixyo","gilyo"],
+      "じゃ":["zya","ja","jya","zixya","jixya"],"じゅ":["zyu","ju","jyu","zixyu","jixyu"],"じょ":["zyo","jo","jyo","zixyo","jixyo"],
+      "びゃ":["bya","bixya","bilya"],"びゅ":["byu","bixyu","bilyu"],"びょ":["byo","bixyo","bilyo"],
+      "ぴゃ":["pya","pixya","pilya"],"ぴゅ":["pyu","pixyu","pilyu"],"ぴょ":["pyo","pixyo","pilyo"],
+      "ふぁ":["fa","fuxa","huxa"],"ふぃ":["fi","fuxi","huxi"],"ふぇ":["fe","fuxe","huxe"],"ふぉ":["fo","fuxo","huxo"],
+      "てぃ":["thi","texi","teli"],"でぃ":["dhi","dexi","deli"],"うぃ":["wi","uxi","uli"],"うぇ":["we","uxe","ule"],
+      "ー":["-"],"、":[","],"。":["."],"！":["!"],"？":["?"],"「":["["],"」":["]"],"・":["/"]," ":[" "]
+    };
+
+    class RomajiMatcher {
+      constructor(text, isDirect = false) {
+        this.isDirect = isDirect;
+        this.tokens = isDirect ? text.split("") : this.tokenize(text);
+        this.tokenIndex = 0;
+        this.typedInToken = "";
+        this.completedRomaji = "";
+        this.allowOptionalSecondN = false;
+        this.activeCandidates = this.buildCandidates(0);
+      }
+
+      tokenize(text) {
+        const out = [];
+        for (let i = 0; i < text.length; i++) {
+          const two = text.slice(i, i + 2);
+          if (ROMAJI_TABLE[two]) {
+            out.push(two);
+            i++;
+          } else {
+            out.push(text[i]);
+          }
+        }
+        return out;
+      }
+
+      buildCandidates(idx) {
+        if (idx >= this.tokens.length) return [];
+        const cur = this.tokens[idx];
+        if (this.isDirect) return [cur];
+
+        const next = this.tokens[idx + 1];
+        const base = [...(ROMAJI_TABLE[cur] || [cur])];
+
+        if (cur === "っ" && next) {
+          const nextCands = ROMAJI_TABLE[next] || [next];
+          const heads = [...new Set(nextCands.map(r => r[0]).filter(c => /^[a-z]$/.test(c) && !/[aiueon]/.test(c)))];
+          heads.reverse().forEach(c => base.unshift(c));
+        }
+
+        if (cur === "ん") {
+          const nextCands = next ? (ROMAJI_TABLE[next] || [next]) : ["a"];
+          const needsDoubleN = !next || nextCands.some(r => /^[aiueoyn]/.test(r));
+          return needsDoubleN ? base.filter(r => r !== "n") : base;
+        }
+        return base;
+      }
+
+      getExpectedChar() {
+        const cand = this.activeCandidates[0] || "";
+        return cand[this.typedInToken.length] || "";
+      }
+
+      getRemainingGuide() {
+        let guide = (this.activeCandidates[0] || "").slice(this.typedInToken.length);
+        for (let i = this.tokenIndex + 1; i < this.tokens.length; i++) {
+          const cands = this.buildCandidates(i);
+          guide += cands[0] || "";
+        }
+        return guide;
+      }
+
+      inputKey(char) {
+        if (this.tokenIndex >= this.tokens.length) return { hit: false, completed: true };
+
+        const key = this.isDirect ? char : char.toLowerCase();
+
+        if (!this.isDirect && this.allowOptionalSecondN && key === "n") {
+          this.allowOptionalSecondN = false;
+          this.completedRomaji += "n";
+          return { hit: true, absorbed: true, completed: this.tokenIndex >= this.tokens.length };
+        }
+        this.allowOptionalSecondN = false;
+
+        const nextTyped = this.typedInToken + key;
+        const matched = this.activeCandidates.filter(c => c.startsWith(nextTyped));
+
+        if (matched.length === 0) {
+          return { hit: false, completed: false };
+        }
+
+        this.typedInToken = nextTyped;
+        this.activeCandidates = matched;
+
+        if (matched.includes(this.typedInToken)) {
+          if (!this.isDirect && this.tokens[this.tokenIndex] === "ん" && this.typedInToken === "n") {
+            this.allowOptionalSecondN = true;
+          }
+          this.completedRomaji += this.typedInToken;
+          this.tokenIndex++;
+          this.typedInToken = "";
+          this.activeCandidates = this.buildCandidates(this.tokenIndex);
+        }
+
+        return {
+          hit: true,
+          completed: this.tokenIndex >= this.tokens.length
+        };
+      }
+    }
+
+    // =========================================================================
+    // 2. WEB AUDIO API SYNC SOUND ENGINE (Zero Latency + Pentatonic Harmony)
+    // =========================================================================
+    class SyncSoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        this.pack = "lofi";
+        this.bgmOn = false;
+        this.bgmTimer = null;
+        this.bgmStep = 0;
+        this.scaleHz = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+        this.step = 0;
+      }
+
+      ensureContext() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === "suspended") {
+          this.ctx.resume().catch(() => {});
+        }
+      }
+
+      playKeystroke(isHit, combo = 0) {
+        if (this.muted) return;
+        this.ensureContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        if (isHit) {
+          const freq = this.scaleHz[this.step % this.scaleHz.length];
+          this.step++;
+
+          if (this.pack === "chiptune") {
+            osc.type = "square";
+            osc.frequency.setValueAtTime(freq * (combo >= 30 ? 2 : 1), now);
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(2800, now);
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.09, now + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+          } else if (this.pack === "marimba") {
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq * 1.5, now);
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(3200, now);
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.22, now + 0.004);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+          } else if (this.pack === "piano") {
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, now);
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(Math.min(1800 + combo * 50, 5000), now);
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.18, now + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+            this.playClickTransient(now);
+          } else {
+            osc.type = combo >= 20 ? "triangle" : "sine";
+            osc.frequency.setValueAtTime(freq, now);
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(Math.min(1100 + combo * 55, 4200), now);
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.17, now + 0.004);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+          }
+        } else {
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(110, now);
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(280, now);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.04, now + 0.002);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+        }
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.24);
+      }
+
+      playClickTransient(now) {
+        const bufSize = Math.floor(this.ctx.sampleRate * 0.012);
+        const buf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.25));
+        }
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.12, now);
+        src.connect(g);
+        g.connect(this.ctx.destination);
+        src.start(now);
+      }
+
+      toggleBgm() {
+        this.bgmOn = !this.bgmOn;
+        if (this.bgmOn) {
+          this.ensureContext();
+          if (this.bgmTimer) clearInterval(this.bgmTimer);
+          const bassNotes = [130.81, 130.81, 146.83, 164.81, 196.00, 196.00, 164.81, 146.83];
+          this.bgmTimer = setInterval(() => {
+            if (this.muted || !this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(bassNotes[this.bgmStep % bassNotes.length], now);
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.05, now + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.3);
+            this.bgmStep++;
+            triggerBgmBarBump();
+          }, 315);
+        } else {
+          if (this.bgmTimer) {
+            clearInterval(this.bgmTimer);
+            this.bgmTimer = null;
+          }
+        }
+        return this.bgmOn;
+      }
+    }
+
+    // =========================================================================
+    // 3. PRESET STAGES & ADAPTIVE DRILL GENERATOR
+    // =========================================================================
+    const PRESET_STAGES = {
+      news: {
+        title: "テック記事（日本語ローマ字）",
+        isDirect: false,
+        items: [
+          { display: "新しいメカニカルキーボードで打鍵のリズムを整える。", kana: "あたらしいめかにかるきーぼーどでだけんのりずむをととのえる。" },
+          { display: "毎日の練習が自然な筋肉記憶へと変わっていく。", kana: "まいにちのれんしゅうがしぜんなきんにくきおくへとかわっていく。" },
+          { display: "自分の好きな文章を打ちながら集中力を高める。", kana: "じぶんのすきなぶんしょうをうちながらしゅうちゅうりょくをたかめる。" }
+        ]
+      },
+      essay: {
+        title: "名言・エッセイ（日本語ローマ字）",
+        isDirect: false,
+        items: [
+          { display: "継続は退屈を設計で乗り越えたときに生まれる。", kana: "けいぞくはたいくつをせっけいでのりこえたときにうまれる。" },
+          { display: "小さな一歩を毎日積み重ねることが最も確実な近道だ。", kana: "ちいさないっぽをまいにちつみかさねることがもっともかくじつなちかみちだ。" },
+          { display: "指先の迷いが消えたとき、思考はそのまま文字になる。", kana: "ゆびさきのまよいがきえたとき、しこうはそのままもじになる。" }
+        ]
+      },
+      code: {
+        title: "TypeScript コード練習",
+        isDirect: true,
+        items: [
+          { display: "const flow = latencies.reduce((a, b) => a + b, 0);", kana: "" },
+          { display: "export function calcWpm(chars: number, sec: number) {", kana: "" },
+          { display: "return Math.round((chars / 5) / (sec / 60)); }", kana: "" }
+        ]
+      },
+      english: {
+        title: "ビジネス英語フロー",
+        isDirect: true,
+        items: [
+          { display: "Consistent daily practice builds effortless muscle memory.", kana: "" },
+          { display: "Rhythm and accuracy always precede raw typing speed.", kana: "" },
+          { display: "Turn your daily reading into an interactive musical flow.", kana: "" }
+        ]
+      }
+    };
+
+    const ADAPTIVE_CORPUS = {
+      "k": { display: "きかいとこうぞうをきほんからかんがえる。", kana: "きかいとこうぞうをきほんからかんがえる。" },
+      "s": { display: "しゅうちゅうしてしずかにすたーとする。", kana: "しゅうちゅうしてしずかにすたーとする。" },
+      "t": { display: "ていねいにたいぴんぐのてんぽをたもつ。", kana: "ていねいにたいぴんぐのてんぽをたもつ。" },
+      "n": { display: "なんどもならしてなめらかににゅうりょくする。", kana: "なんどもならしてなめらかににゅうりょくする。" },
+      "r": { display: "りずむよくれんぞくでらいんをうみだす。", kana: "りずむよくれんぞくでらいんをうみだす。" },
+      "p": { display: "ぷろぐらむのぱたーんをぴったりのぺーすでうつ。", kana: "ぷろぐらむのぱたーんをぴったりのぺーすでうつ。" }
+    };
+
+    // =========================================================================
+    // 4. KEYBOARD LAYOUT & FINGER MAP
+    // =========================================================================
+    const KB_ROWS = [
+      ["1","2","3","4","5","6","7","8","9","0","-"],
+      ["q","w","e","r","t","y","u","i","o","p"],
+      ["a","s","d","f","g","h","j","k","l"],
+      ["z","x","c","v","b","n","m",",","."]
+    ];
+
+    const FINGER_MAP = {
+      "1":"左手・小指","q":"左手・小指","a":"左手・小指","z":"左手・小指",
+      "2":"左手・薬指","w":"左手・薬指","s":"左手・薬指","x":"左手・薬指",
+      "3":"左手・中指","e":"左手・中指","d":"左手・中指","c":"左手・中指",
+      "4":"左手・人差指","5":"左手・人差指","r":"左手・人差指","t":"左手・人差指","f":"左手・人差指","g":"左手・人差指","v":"左手・人差指","b":"左手・人差指",
+      "6":"右手・人差指","7":"右手・人差指","y":"右手・人差指","u":"右手・人差指","h":"右手・人差指","j":"右手・人差指","n":"右手・人差指","m":"右手・人差指",
+      "8":"右手・中指","i":"右手・中指","k":"右手・中指",",":"右手・中指",
+      "9":"右手・薬指","o":"右手・薬指","l":"右手・薬指",".":"右手・薬指",
+      "0":"右手・小指","-":"右手・小指","p":"右手・小指"," ":"親指（スペース）"
+    };
+
+    // =========================================================================
+    // 5. APP STATE, THEMES & PERSISTENCE
+    // =========================================================================
+    const THEMES = [
+      { id: "studio", label: "Studio" },
+      { id: "paper", label: "Paper" },
+      { id: "amber", label: "Amber" }
+    ];
+    let themeIdx = 0;
+
+    const sound = new SyncSoundEngine();
+    let currentStage = PRESET_STAGES.news;
+    let itemIdx = 0;
+    let matcher = null;
+    let startTime = null;
+    let lastKeyTime = null;
+    let totalHits = 0;
+    let totalMisses = 0;
+    let combo = 0;
+    let latencies = [];
+    let bigramStats = {};
+    let prevHitChar = null;
+    let stageCompleted = false;
+
+    const BAR_COUNT = 32;
+    let spectrumBars = new Array(BAR_COUNT).fill(0.08);
+    let vizParticles = [];
+
+    function loadSavedStats() {
+      try {
+        const raw = localStorage.getItem("typeweaver_stats_v1");
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return { streak: 1, bigrams: {}, history: [] };
+    }
+
+    function saveStats(data) {
+      try {
+        localStorage.setItem("typeweaver_stats_v1", JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    let persisted = loadSavedStats();
+
+    // =========================================================================
+    // 6. DOM RENDERING & TYPING LOOP
+    // =========================================================================
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      setTimeout(() => el.classList.add("hidden"), 2600);
+    }
+
+    function buildVirtualKeyboard() {
+      const kb = document.getElementById("virtual-keyboard");
+      kb.innerHTML = "";
+      KB_ROWS.forEach((row, rIdx) => {
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "flex justify-center gap-1.5 sm:gap-2";
+        // Subtle ergonomic stagger
+        if (rIdx === 1) rowDiv.style.paddingLeft = "12px";
+        if (rIdx === 2) rowDiv.style.paddingLeft = "24px";
+        if (rIdx === 3) rowDiv.style.paddingLeft = "36px";
+
+        row.forEach(k => {
+          const finger = FINGER_MAP[k] || "";
+          const isLeft = finger.startsWith("左手");
+          const fingerCls = isLeft ? "finger-left" : "finger-right";
+          const homingCls = (k === "f" || k === "j") ? "homing" : "";
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.dataset.key = k;
+          btn.className = `key-cap ${fingerCls} ${homingCls} w-7 h-10 sm:w-11 sm:h-11 rounded-xl font-mono-code text-xs sm:text-sm font-semibold flex items-center justify-center shadow-sm`;
+          btn.textContent = k.toUpperCase();
+          btn.addEventListener("click", () => handleCharInput(k));
+          rowDiv.appendChild(btn);
+        });
+        kb.appendChild(rowDiv);
+      });
+
+      const spRow = document.createElement("div");
+      spRow.className = "flex justify-center mt-1.5";
+      const spBtn = document.createElement("button");
+      spBtn.type = "button";
+      spBtn.dataset.key = " ";
+      spBtn.className = "key-cap w-48 sm:w-72 h-9 rounded-xl font-mono-code text-xs font-medium tracking-widest opacity-80 flex items-center justify-center shadow-sm";
+      spBtn.textContent = "SPACE";
+      spBtn.addEventListener("click", () => handleCharInput(" "));
+      spRow.appendChild(spBtn);
+      kb.appendChild(spRow);
+    }
+
+    function loadStage(stageObj) {
+      currentStage = stageObj;
+      itemIdx = 0;
+      startTime = null;
+      lastKeyTime = null;
+      totalHits = 0;
+      totalMisses = 0;
+      combo = 0;
+      latencies = [];
+      bigramStats = {};
+      prevHitChar = null;
+      stageCompleted = false;
+
+      document.getElementById("result-panel").classList.add("hidden");
+      document.getElementById("stage-title-display").textContent = stageObj.title;
+      document.getElementById("romaji-mode-badge").textContent = stageObj.isDirect
+        ? "直接入力モード (English / Code)"
+        : "揺れ判定: ON (si/shi・n/nn自動吸収)";
+
+      loadCurrentItem();
+      updateMetrics();
+    }
+
+    function loadCurrentItem() {
+      const item = currentStage.items[itemIdx];
+      const targetText = currentStage.isDirect ? item.display : (item.kana || item.display);
+      matcher = new RomajiMatcher(targetText, currentStage.isDirect);
+      prevHitChar = null;
+
+      document.getElementById("display-kanji").textContent = item.display;
+      document.getElementById("display-kana").textContent = currentStage.isDirect ? "" : item.kana;
+      document.getElementById("stage-progress-text").textContent = `${itemIdx + 1} / ${currentStage.items.length}`;
+      const pct = Math.round((itemIdx / currentStage.items.length) * 100);
+      document.getElementById("stage-progress-bar").style.width = `${pct}%`;
+
+      renderRomajiLine();
+      highlightTargetKey();
+    }
+
+    function renderRomajiLine() {
+      const box = document.getElementById("display-romaji");
+      const done = matcher.completedRomaji + matcher.typedInToken;
+      const rem = matcher.getRemainingGuide();
+      const nextChar = rem[0] || "";
+      const rest = rem.slice(1);
+
+      box.innerHTML = "";
+      const doneSpan = document.createElement("span");
+      doneSpan.className = "text-teal-400";
+      doneSpan.textContent = done;
+
+      const curSpan = document.createElement("span");
+      curSpan.className = "bg-teal-500 text-slate-950 font-bold px-1 rounded-md shadow-sm shadow-teal-500/40 mx-0.5";
+      curSpan.textContent = nextChar === " " ? "␣" : nextChar;
+
+      const restSpan = document.createElement("span");
+      restSpan.className = "opacity-45";
+      restSpan.textContent = rest;
+
+      box.appendChild(doneSpan);
+      if (nextChar) box.appendChild(curSpan);
+      box.appendChild(restSpan);
+    }
+
+    function highlightTargetKey() {
+      document.querySelectorAll(".key-cap.active-target").forEach(el => el.classList.remove("active-target"));
+      const expected = matcher ? matcher.getExpectedChar().toLowerCase() : "";
+      if (!expected) {
+        document.getElementById("next-finger-hint").textContent = "次の指: --";
+        return;
+      }
+      const keyEl = document.querySelector(`.key-cap[data-key="${CSS.escape(expected)}"]`);
+      if (keyEl) keyEl.classList.add("active-target");
+      document.getElementById("next-finger-hint").textContent = `次の指: ${FINGER_MAP[expected] || "対応キー"}`;
+    }
+
+    function flashKey(char, isHit) {
+      const k = char.toLowerCase();
+      const el = document.querySelector(`.key-cap[data-key="${CSS.escape(k)}"]`);
+      if (!el) return;
+      const cls = isHit ? "just-pressed" : "just-missed";
+      el.classList.add(cls);
+      setTimeout(() => el.classList.remove(cls), 130);
+    }
+
+    function handleCharInput(char) {
+      if (stageCompleted || !matcher) return;
+      const now = performance.now();
+      if (!startTime) startTime = now;
+
+      const res = matcher.inputKey(char);
+      if (res.hit) {
+        totalHits++;
+        combo++;
+        if (lastKeyTime) {
+          const dt = Math.min(now - lastKeyTime, 1500);
+          latencies.push(dt);
+          if (prevHitChar) {
+            const pair = `${prevHitChar}->${char.toLowerCase()}`;
+            if (!bigramStats[pair]) bigramStats[pair] = [];
+            bigramStats[pair].push(dt);
+          }
+        }
+        lastKeyTime = now;
+        prevHitChar = char.toLowerCase();
+
+        sound.playKeystroke(true, combo);
+        flashKey(char, true);
+        spawnVizPulse(true);
+
+        if (res.completed) {
+          itemIdx++;
+          if (itemIdx >= currentStage.items.length) {
+            finishStage();
+          } else {
+            loadCurrentItem();
+          }
+        } else {
+          renderRomajiLine();
+          highlightTargetKey();
+        }
+      } else {
+        totalMisses++;
+        combo = 0;
+        sound.playKeystroke(false, 0);
+        flashKey(char, false);
+        spawnVizPulse(false);
+        const arena = document.getElementById("display-romaji");
+        arena.classList.remove("animate-shake");
+        void arena.offsetWidth;
+        arena.classList.add("animate-shake");
+      }
+      updateMetrics();
+    }
+
+    function calcFlowScore() {
+      if (latencies.length < 4) return null;
+      const mean = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+      const variance = latencies.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / latencies.length;
+      const std = Math.sqrt(variance);
+      const cv = std / Math.max(mean, 1);
+      return Math.max(10, Math.min(100, Math.round(100 - cv * 85)));
+    }
+
+    function updateMetrics() {
+      const elapsedMin = startTime ? Math.max((performance.now() - startTime) / 60000, 0.02) : 0;
+      const wpm = startTime ? Math.round((totalHits / 5) / elapsedMin) : 0;
+      const total = totalHits + totalMisses;
+      const acc = total > 0 ? Math.round((totalHits / total) * 100) : 100;
+      const flow = calcFlowScore();
+
+      document.getElementById("metric-wpm").textContent = wpm;
+      document.getElementById("metric-acc").textContent = `${acc}%`;
+      document.getElementById("metric-flow").textContent = flow !== null ? flow : "--";
+      document.getElementById("metric-combo").textContent = combo;
+
+      const layer = combo >= 40 ? "Layer 3 (Full)" : combo >= 20 ? "Layer 2 (Synth)" : "Layer 1 (Base)";
+      document.getElementById("combo-layer-label").textContent = layer;
+    }
+
+    function finishStage() {
+      stageCompleted = true;
+      document.getElementById("stage-progress-bar").style.width = "100%";
+      document.getElementById("result-panel").classList.remove("hidden");
+
+      const wpm = Number(document.getElementById("metric-wpm").textContent) || 0;
+      const flow = calcFlowScore() || 80;
+
+      const pairAvgs = Object.entries(bigramStats).map(([pair, arr]) => ({
+        pair,
+        avg: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+      })).sort((a, b) => b.avg - a.avg);
+
+      const top3 = pairAvgs.slice(0, 3);
+      const box = document.getElementById("result-bottlenecks");
+      if (top3.length > 0) {
+        box.innerHTML = `<span class="opacity-75">今回もっとも指が迷ったキー遷移: </span>` +
+          top3.map(t => `<span class="inline-block font-mono-code bg-orange-500/15 border border-orange-500/30 text-orange-400 px-2.5 py-0.5 rounded-lg mx-1">${t.pair} (${t.avg}ms)</span>`).join("");
+      } else {
+        box.textContent = "安定したリズムで完走しました！";
+      }
+
+      Object.entries(bigramStats).forEach(([pair, arr]) => {
+        if (!persisted.bigrams[pair]) persisted.bigrams[pair] = [];
+        persisted.bigrams[pair].push(...arr.slice(-5));
+      });
+      persisted.history.unshift({
+        title: currentStage.title,
+        wpm,
+        flow,
+        date: new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })
+      });
+      persisted.history = persisted.history.slice(0, 10);
+      saveStats(persisted);
+      renderRadarView();
+    }
+
+    function startAdaptiveDrill() {
+      const allPairs = Object.entries(persisted.bigrams);
+      let targetKey = "k";
+      if (allPairs.length > 0) {
+        const sorted = allPairs.map(([p, arr]) => ({
+          p,
+          avg: arr.reduce((a, b) => a + b, 0) / arr.length
+        })).sort((a, b) => b.avg - a.avg);
+        const dest = sorted[0].p.split("->")[1];
+        if (ADAPTIVE_CORPUS[dest]) targetKey = dest;
+      }
+      const drillItem = ADAPTIVE_CORPUS[targetKey] || ADAPTIVE_CORPUS.k;
+      loadStage({
+        title: `適応型特化ドリル（重点キー: ${targetKey.toUpperCase()}）`,
+        isDirect: false,
+        items: [drillItem, PRESET_STAGES.news.items[0]]
+      });
+      switchTab("studio");
+      showToast(`苦手キー「${targetKey.toUpperCase()}」を重点強化するステージを生成しました`);
+    }
+
+    // =========================================================================
+    // 7. SPECTRUM AUDIO VISUALIZER CANVAS
+    // =========================================================================
+    function triggerBgmBarBump() {
+      for (let i = 0; i < 6; i++) {
+        spectrumBars[i] = Math.max(spectrumBars[i], 0.45 + Math.random() * 0.25);
+      }
+    }
+
+    function spawnVizPulse(isHit) {
+      const center = Math.floor(Math.random() * (BAR_COUNT - 6)) + 3;
+      for (let i = -2; i <= 2; i++) {
+        const idx = center + i;
+        if (idx >= 0 && idx < BAR_COUNT) {
+          const boost = isHit ? (0.95 - Math.abs(i) * 0.22) : 0.35;
+          spectrumBars[idx] = Math.max(spectrumBars[idx], boost);
+        }
+      }
+      vizParticles.push({
+        x: center / BAR_COUNT,
+        r: isHit ? 4 : 2,
+        alpha: 1,
+        color: isHit ? "#14B8A6" : "#F97316"
+      });
+    }
+
+    function drawVisualizer() {
+      const canvas = document.getElementById("viz-canvas");
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+          canvas.width = Math.max(300, Math.floor(rect.width));
+          canvas.height = Math.max(56, Math.floor(rect.height));
+        }
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const barW = canvas.width / BAR_COUNT;
+        for (let i = 0; i < BAR_COUNT; i++) {
+          spectrumBars[i] = Math.max(0.08, spectrumBars[i] * 0.91);
+          const h = spectrumBars[i] * (canvas.height - 12);
+          const x = i * barW + barW * 0.22;
+          const y = (canvas.height - h) / 2;
+
+          const grad = ctx.createLinearGradient(0, y, 0, y + h);
+          if (combo >= 20) {
+            grad.addColorStop(0, "#2DD4BF");
+            grad.addColorStop(1, "#F97316");
+          } else {
+            grad.addColorStop(0, "#5EEAD4");
+            grad.addColorStop(1, "#0D9488");
+          }
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.roundRect(x, y, Math.max(3, barW * 0.56), h, 3);
+          ctx.fill();
+        }
+
+        vizParticles.forEach(p => {
+          p.r += 1.5;
+          p.alpha -= 0.04;
+          ctx.beginPath();
+          ctx.arc(p.x * canvas.width, canvas.height / 2, p.r, 0, Math.PI * 2);
+          ctx.strokeStyle = p.color;
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+        vizParticles = vizParticles.filter(p => p.alpha > 0);
+      }
+      requestAnimationFrame(drawVisualizer);
+    }
+
+    // =========================================================================
+    // 8. NAVIGATION, BYOT & RADAR VIEWS
+    // =========================================================================
+    function switchTab(tabName) {
+      ["studio", "byot", "radar"].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle("hidden", t !== tabName);
+        const btn = document.getElementById(`nav-${t}`);
+        if (t === tabName) {
+          btn.classList.add("bg-teal-500", "text-slate-950", "font-semibold", "shadow-sm");
+          btn.classList.remove("opacity-75");
+        } else {
+          btn.classList.remove("bg-teal-500", "text-slate-950", "font-semibold", "shadow-sm");
+          btn.classList.add("opacity-75");
+        }
+      });
+      if (tabName === "radar") renderRadarView();
+    }
+
+    function renderRadarView() {
+      const bList = document.getElementById("radar-bigram-list");
+      const hList = document.getElementById("radar-history-list");
+
+      const pairs = Object.entries(persisted.bigrams).map(([pair, arr]) => ({
+        pair,
+        avg: Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+      })).sort((a, b) => b.avg - a.avg).slice(0, 6);
+
+      if (pairs.length === 0) {
+        bList.innerHTML = `<p class="text-xs opacity-60">まだ計測データがありません。スタジオで1ステージ打鍵すると解析が表示されます。</p>`;
+      } else {
+        bList.innerHTML = pairs.map(p => {
+          const pct = Math.min(100, Math.round((p.avg / 600) * 100));
+          return `
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-mono-code">
+                <span>${p.pair}</span>
+                <span class="text-orange-400 font-semibold">${p.avg} ms</span>
+              </div>
+              <div class="w-full h-1.5 bg-black/25 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-orange-400 to-pink-500" style="width:${pct}%"></div>
+              </div>
+            </div>`;
+        }).join("");
+      }
+
+      if (persisted.history.length === 0) {
+        hList.innerHTML = `<p class="text-xs opacity-60">完走したセッションのWPMとFlow Scoreがここに記録されます。</p>`;
+      } else {
+        hList.innerHTML = persisted.history.map(h => `
+          <div class="flex items-center justify-between py-2 border-b border-[var(--border-subtle)] text-xs">
+            <span class="opacity-85 truncate max-w-[55%]">${h.title}</span>
+            <span class="font-mono-code">${h.wpm} WPM / <span class="text-teal-400 font-semibold">Flow ${h.flow}</span></span>
+          </div>
+        `).join("");
+      }
+    }
+
+    // =========================================================================
+    // 9. EVENT LISTENERS
+    // =========================================================================
+    window.addEventListener("load", () => {
+      buildVirtualKeyboard();
+      document.getElementById("streak-count").textContent = persisted.streak || 1;
+      loadStage(PRESET_STAGES.news);
+      renderRadarView();
+      requestAnimationFrame(drawVisualizer);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (document.getElementById("view-studio").classList.contains("hidden")) return;
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT")) {
+        if (e.target.id !== "mobile-input") return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.length === 1) {
+        e.preventDefault();
+        handleCharInput(e.key);
+      }
+    });
+
+    document.getElementById("mobile-input").addEventListener("input", (e) => {
+      const val = e.target.value;
+      if (val.length > 0) {
+        handleCharInput(val[val.length - 1]);
+        e.target.value = "";
+      }
+    });
+
+    document.getElementById("nav-studio").addEventListener("click", () => switchTab("studio"));
+    document.getElementById("nav-byot").addEventListener("click", () => switchTab("byot"));
+    document.getElementById("nav-radar").addEventListener("click", () => switchTab("radar"));
+    document.getElementById("btn-open-byot-shortcut").addEventListener("click", () => switchTab("byot"));
+
+    document.getElementById("btn-theme").addEventListener("click", () => {
+      themeIdx = (themeIdx + 1) % THEMES.length;
+      const t = THEMES[themeIdx];
+      document.documentElement.setAttribute("data-theme", t.id);
+      document.getElementById("theme-label").textContent = t.label;
+    });
+
+    document.querySelectorAll(".stage-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".stage-btn").forEach(b => {
+          b.className = "stage-btn px-3 py-1.5 rounded-xl text-xs font-medium sub-surface opacity-80 hover:opacity-100";
+        });
+        btn.className = "stage-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/40 shadow-sm";
+        loadStage(PRESET_STAGES[btn.dataset.stage]);
+      });
+    });
+
+    document.getElementById("btn-reset-stage").addEventListener("click", () => loadStage(currentStage));
+    document.getElementById("btn-replay-stage").addEventListener("click", () => loadStage(currentStage));
+    document.getElementById("btn-adaptive-next").addEventListener("click", startAdaptiveDrill);
+    document.getElementById("btn-start-weakness-drill").addEventListener("click", startAdaptiveDrill);
+
+    document.getElementById("sound-pack").addEventListener("change", (e) => {
+      sound.pack = e.target.value;
+      sound.playKeystroke(true, 15);
+    });
+
+    document.getElementById("btn-mute").addEventListener("click", (e) => {
+      sound.muted = !sound.muted;
+      e.target.textContent = sound.muted ? "音: OFF" : "音: ON";
+      e.target.className = sound.muted
+        ? "px-2.5 py-1.5 rounded-lg text-xs font-medium sub-surface opacity-60 transition"
+        : "px-2.5 py-1.5 rounded-lg text-xs font-semibold sub-surface text-teal-400 hover:border-teal-500/50 transition";
+    });
+
+    document.getElementById("btn-bgm").addEventListener("click", (e) => {
+      const on = sound.toggleBgm();
+      e.target.textContent = on ? "BGM: ON" : "BGM: OFF";
+      e.target.className = on
+        ? "px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-teal-500/50 bg-teal-500/15 text-teal-400 transition"
+        : "px-2.5 py-1.5 rounded-lg text-xs font-medium sub-surface opacity-80 hover:opacity-100 transition";
+    });
+
+    document.getElementById("byot-mode").addEventListener("change", (e) => {
+      document.getElementById("byot-kana-wrap").classList.toggle("hidden", e.target.value === "direct");
+    });
+
+    document.getElementById("btn-sample-byot-code").addEventListener("click", () => {
+      document.getElementById("byot-title").value = "React useEffect 練習";
+      document.getElementById("byot-mode").value = "direct";
+      document.getElementById("byot-kana-wrap").classList.add("hidden");
+      document.getElementById("byot-display-text").value = "useEffect(() => {\n  const id = setInterval(tick, 1000);\n  return () => clearInterval(id);\n}, []);";
+    });
+
+    document.getElementById("btn-create-byot").addEventListener("click", () => {
+      const title = document.getElementById("byot-title").value.trim() || "カスタムステージ";
+      const isDirect = document.getElementById("byot-mode").value === "direct";
+      const lines = document.getElementById("byot-display-text").value.split("\n").map(s => s.trim()).filter(Boolean);
+      const kanaLines = document.getElementById("byot-kana-text").value.split("\n").map(s => s.trim());
+
+      if (lines.length === 0) {
+        showToast("練習テキストを1行以上入力してください");
+        return;
+      }
+
+      const items = lines.map((line, i) => ({
+        display: line,
+        kana: isDirect ? "" : (kanaLines[i] || line)
+      }));
+
+      loadStage({ title, isDirect, items });
+      switchTab("studio");
+      showToast(`「${title}」ステージを生成しました！`);
+    });
+
+    document.getElementById("btn-clear-stats").addEventListener("click", () => {
+      persisted = { streak: 1, bigrams: {}, history: [] };
+      saveStats(persisted);
+      renderRadarView();
+      showToast("迷いレーダーの履歴をリセットしました");
+    });
+  </script>
+</body>
+</html>
